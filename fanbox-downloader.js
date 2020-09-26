@@ -4,6 +4,7 @@ function main(){
     if(window.location.origin!="https://downloads.fanbox.cc"){
         alert("https://downloads.fanbox.ccで実行してね");
         window.location.href = "https://downloads.fanbox.cc";
+        return;
     }
 
     if(confirm("クリエイターページからダウンロードする？")){
