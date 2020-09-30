@@ -1,82 +1,131 @@
-var dlList = new Array();
+var dlList = new Object();
+dlList.items = new Array();
+dlList.postCount = 0;
+dlList.fileCount = 0;
 var isIgnoreFree = false;
+var isEco = false;
+
 
 function main() {
     if (window.location.origin == "https://downloads.fanbox.cc") {
         document.body.innerHTML = "";
-        var json = prompt("jsonをコピペしてね");
-        if (json == null) return;
-        var obj = JSON.parse(json);
-        obj.forEach(dl => {
-            createLink(dl.url, dl.filename);
-        });
-        startDownload();
+        var tb = document.createElement("input");
+        tb.type = "text";
+        var bt = document.createElement("input");
+        bt.type = "button";
+        bt.value = "ok";
+        document.body.appendChild(tb);
+        document.body.appendChild(bt);
+        bt.onclick = function(){
+            JSON.parse(tb.value).items.forEach(dl => {
+                createLink(dl.url, dl.filename);
+            });
+            startDownload();
+        };
+        
     } else if (window.location.origin == "https://www.fanbox.cc") {
         if (window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/) == null) {
             var id = window.location.href.match(/fanbox.cc\/@(.*)/)[1];
 
-            var limit = prompt("取得制限数を入力");
-            if (limit == null) return;
-
             isIgnoreFree = confirm("無料コンテンツを省く？");
 
-            addByCreatorId(id, limit);
+            isEco = confirm("ecoモードにする？");
+
+            var limit = prompt("取得制限数(最大300)を入力 キャンセルで最後まで取得");
+            if (limit == null){
+                var count=1;
+                var nextUrl="https://api.fanbox.cc/post.listCreator?creatorId=" + id + "&limit=100";
+                for(;nextUrl!=null;count++){
+                    console.log(count+"回目");
+                    var nextUrl = addByPostListUrl(nextUrl, isEco);
+                }
+            }else{
+                // limit=300が限界らしい？
+                var nextUrl = addByPostListUrl("https://api.fanbox.cc/post.listCreator?creatorId=" + id + "&limit=" + limit, isEco);
+            }
         } else {
             var id = window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/)[1];
-            addByPostId(id);
+            addByPostInfo(getPostInfoById(id));
         }
         navigator.clipboard.writeText(JSON.stringify(dlList));
-        alert("jsonをコピーしました。遷移先で実行して貼り付けてね");
-        window.location.href = "https://downloads.fanbox.cc";
+        alert("jsonをコピーしました。downloads.fanbox.ccで実行して貼り付けてね");
+        window.open("https://downloads.fanbox.cc");
     } else {
         alert("ここどこですか");
     }
 }
 
-// クリエイターIDからURLリストに追加
-function addByCreatorId(creatorId, limit) {
-    var request = new XMLHttpRequest();
-    request.open('GET', "https://api.fanbox.cc/post.listCreator?creatorId=" + creatorId + "&limit=" + limit, false);
-    request.withCredentials = true;
-    request.send(null);
-    var postList = JSON.parse(request.responseText);
+// 投稿リストURLからURLリストに追加
+function addByPostListUrl(url, eco) {
+    var postList = JSON.parse(fetchUrl(url));
     var items = postList.body.items;
 
+    console.log("投稿の数:"+items.length);
     for (var i = 0; i < items.length; i++) {
-        addByPostId(items[i].id);
+        dlList.postCount++;
+        // ecoがtrueならpostInfoを個別に取得しない
+        if(eco==true){
+            addByPostInfo(items[i]);
+        }else{
+            addByPostInfo(getPostInfoById(items[i].id));
+        }
+        
     }
+
+    return postList.body.nextUrl;
 }
 
-// 投稿IDからURLリストに追加
-function addByPostId(postId) {
+// HTTP GETするおまじない
+function fetchUrl(url){
     var request = new XMLHttpRequest();
-    request.open('GET', "https://api.fanbox.cc/post.info?postId=" + postId, false);
+    request.open('GET', url, false);
     request.withCredentials = true;
     request.send(null);
-    var postInfo = JSON.parse(request.responseText);
-    var title = postInfo.body.title;
-    var author = postInfo.body.user.name;
-    if(isIgnoreFree && (postInfo.body.feeRequired==0)){
+    return request.responseText;
+}
+
+// 投稿IDからpostInfoを得る
+function getPostInfoById(postId) {
+    return JSON.parse(fetchUrl("https://api.fanbox.cc/post.info?postId=" + postId)).body;
+}
+
+// postInfoオブジェクトからURLリストに追加する
+function addByPostInfo(postInfo) {
+    var title = postInfo.title;
+    var author = postInfo.user.name;
+    if(isIgnoreFree && (postInfo.feeRequired==0)){
         return;
     }
 
-    if(postInfo.body.body==null){
-        console.log("取得できませんでした(支援がたりない？)\n" + "feeRequired: " + postInfo.body.feeRequired + "@" + postId);
+    if(postInfo.body==null){
+        console.log("取得できませんでした(支援がたりない？)\n" + "feeRequired: " + postInfo.feeRequired + "@" + postId);
         return;
     }
 
-    if (postInfo.body.type == "image") {
-        var images = postInfo.body.body.images;
+    if (postInfo.type == "image") {
+        var images = postInfo.body.images;
         for (var i = 0; i < images.length; i++) {
             addUrl(images[i].originalUrl, author + " - " + title + " " + (i+1) + "." + images[i].extension);
         }
-    } else if (postInfo.body.type == "file") {
-        var files = postInfo.body.body.files;
+    } else if (postInfo.type == "file") {
+        var files = postInfo.body.files;
         for (var i = 0; i < files.length; i++) {
-            addUrl(files[i].originalUrl, author + " - " + title + " " + files[i].name + "." + files[i].extension);
+            addUrl(files[i].Url, author + " - " + title + " " + files[i].name + "." + files[i].extension);
+        }
+    } else if (postInfo.type == "article") {
+        var imageMap = postInfo.body.imageMap;
+        var imageMapKeys = Object.keys(imageMap);
+        for (var i = 0; i < imageMapKeys.length; i++) {
+            addUrl(imageMap[imageMapKeys[i]].originalUrl, author + " - " + title + " " + (i+1) + "." + imageMap[imageMapKeys[i]].extension);
+        }
+
+        var fileMap = postInfo.body.fileMap;
+        var fileMapKeys = Object.keys(fileMap);
+        for (var i = 0; i < fileMapKeys.length; i++) {
+            addUrl(fileMap[fileMapKeys[i]].Url, author + " - " + title + " " + fileMap[fileMapKeys[i]].name + "." + fileMap[fileMapKeys[i]].extension);
         }
     } else {
-        console.log("不明なタイプ\n" + postInfo.body.type + "@" + postId);
+        console.log("不明なタイプ\n" + postInfo.type + "@" + postInfo.id);
     }
 }
 
@@ -86,7 +135,8 @@ function addUrl(url, filename) {
     dl.url = url;
     dl.filename = filename;
 
-    dlList.push(dl);
+    dlList.fileCount++;
+    dlList.items.push(dl);
 }
 
 // ダウンロードリンクを作成
