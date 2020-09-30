@@ -25,6 +25,7 @@ function main() {
         
     } else if (window.location.origin == "https://www.fanbox.cc") {
         if (window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/) == null) {
+            dlList.items = new Array();
             var id = window.location.href.match(/fanbox.cc\/@(.*)/)[1];
 
             isIgnoreFree = confirm("無料コンテンツを省く？");
@@ -47,8 +48,11 @@ function main() {
             var id = window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/)[1];
             addByPostInfo(getPostInfoById(id));
         }
-        navigator.clipboard.writeText(JSON.stringify(dlList));
+        var json=JSON.stringify(dlList);
+        navigator.clipboard.writeText(json);
+        console.log(json);
         alert("jsonをコピーしました。downloads.fanbox.ccで実行して貼り付けてね");
+        dlList.items.
         window.open("https://downloads.fanbox.cc");
     } else {
         alert("ここどこですか");
@@ -65,6 +69,7 @@ function addByPostListUrl(url, eco) {
         dlList.postCount++;
         // ecoがtrueならpostInfoを個別に取得しない
         if(eco==true){
+            console.log(items[i]);
             addByPostInfo(items[i]);
         }else{
             addByPostInfo(getPostInfoById(items[i].id));
@@ -110,7 +115,7 @@ function addByPostInfo(postInfo) {
     } else if (postInfo.type == "file") {
         var files = postInfo.body.files;
         for (var i = 0; i < files.length; i++) {
-            addUrl(files[i].Url, author + " - " + title + " " + files[i].name + "." + files[i].extension);
+            addUrl(files[i].url, author + " - " + title + " " + files[i].name + "." + files[i].extension);
         }
     } else if (postInfo.type == "article") {
         var imageMap = postInfo.body.imageMap;
@@ -122,7 +127,7 @@ function addByPostInfo(postInfo) {
         var fileMap = postInfo.body.fileMap;
         var fileMapKeys = Object.keys(fileMap);
         for (var i = 0; i < fileMapKeys.length; i++) {
-            addUrl(fileMap[fileMapKeys[i]].Url, author + " - " + title + " " + fileMap[fileMapKeys[i]].name + "." + fileMap[fileMapKeys[i]].extension);
+            addUrl(fileMap[fileMapKeys[i]].url, author + " - " + title + " " + fileMap[fileMapKeys[i]].name + "." + fileMap[fileMapKeys[i]].extension);
         }
     } else {
         console.log("不明なタイプ\n" + postInfo.type + "@" + postInfo.id);
