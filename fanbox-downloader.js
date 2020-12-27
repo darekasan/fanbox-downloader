@@ -103,7 +103,7 @@ function addByPostInfo(postInfo) {
     }
 
     if(postInfo.body==null){
-        console.log("取得できませんでした(支援がたりない？)\n" + "feeRequired: " + postInfo.feeRequired + "@" + postId);
+        console.log("取得できませんでした(支援がたりない？)\n" + "feeRequired: " + postInfo.feeRequired + "@" + postInfo.id);
         return;
     }
 
