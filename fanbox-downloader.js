@@ -3,8 +3,9 @@ dlList.items = new Array();
 dlList.postCount = 0;
 dlList.fileCount = 0;
 var isIgnoreFree = false;
-var isEco = false;
 
+// 投稿の情報を個別に取得しない（基本true）
+var isEco = true;
 
 function main() {
     if (window.location.origin == "https://downloads.fanbox.cc") {
@@ -30,8 +31,6 @@ function main() {
 
             isIgnoreFree = confirm("無料コンテンツを省く？");
 
-            isEco = confirm("ecoモードにする？");
-
             var limit = prompt("取得制限数(最大300)を入力 キャンセルで最後まで取得");
             if (limit == null){
                 var count=1;
@@ -52,8 +51,6 @@ function main() {
         navigator.clipboard.writeText(json);
         console.log(json);
         alert("jsonをコピーしました。downloads.fanbox.ccで実行して貼り付けてね");
-        dlList.items.
-        window.open("https://downloads.fanbox.cc");
     } else {
         alert("ここどこですか");
     }
@@ -97,7 +94,9 @@ function getPostInfoById(postId) {
 // postInfoオブジェクトからURLリストに追加する
 function addByPostInfo(postInfo) {
     var title = postInfo.title;
-    var author = postInfo.user.name;
+    // クリエイター名より日付入ってたほうがうれしいのでかえた（きまぐれ）
+    
+    var date = postInfo.publishedDatetime;
     if(isIgnoreFree && (postInfo.feeRequired==0)){
         return;
     }
@@ -110,24 +109,24 @@ function addByPostInfo(postInfo) {
     if (postInfo.type == "image") {
         var images = postInfo.body.images;
         for (var i = 0; i < images.length; i++) {
-            addUrl(images[i].originalUrl, author + " - " + title + " " + (i+1) + "." + images[i].extension);
+            addUrl(images[i].originalUrl, date + " " + title + " " + (i+1) + "." + images[i].extension);
         }
     } else if (postInfo.type == "file") {
         var files = postInfo.body.files;
         for (var i = 0; i < files.length; i++) {
-            addUrl(files[i].url, author + " - " + title + " " + files[i].name + "." + files[i].extension);
+            addUrl(files[i].url, date + " " + title + " " + files[i].name + "." + files[i].extension);
         }
     } else if (postInfo.type == "article") {
         var imageMap = postInfo.body.imageMap;
         var imageMapKeys = Object.keys(imageMap);
         for (var i = 0; i < imageMapKeys.length; i++) {
-            addUrl(imageMap[imageMapKeys[i]].originalUrl, author + " - " + title + " " + (i+1) + "." + imageMap[imageMapKeys[i]].extension);
+            addUrl(imageMap[imageMapKeys[i]].originalUrl, date + " " + title + " " + (i+1) + "." + imageMap[imageMapKeys[i]].extension);
         }
 
         var fileMap = postInfo.body.fileMap;
         var fileMapKeys = Object.keys(fileMap);
         for (var i = 0; i < fileMapKeys.length; i++) {
-            addUrl(fileMap[fileMapKeys[i]].url, author + " - " + title + " " + fileMap[fileMapKeys[i]].name + "." + fileMap[fileMapKeys[i]].extension);
+            addUrl(fileMap[fileMapKeys[i]].url, date + " " + title + " " + fileMap[fileMapKeys[i]].name + "." + fileMap[fileMapKeys[i]].extension);
         }
     } else {
         console.log("不明なタイプ\n" + postInfo.type + "@" + postInfo.id);
