@@ -24,10 +24,10 @@ function main() {
             startDownload();
         };
         
-    } else if (window.location.origin == "https://www.fanbox.cc") {
-        if (window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/) == null) {
+    } else if (window.location.origin.includes("fanbox.cc")) {
+        if (window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts\/(\d*)/) == null) {
             dlList.items = new Array();
-            var id = window.location.href.match(/fanbox.cc\/@(.*)/)[1];
+            var id = window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts/)[1];
 
             isIgnoreFree = confirm("無料コンテンツを省く？");
 
@@ -44,7 +44,7 @@ function main() {
                 var nextUrl = addByPostListUrl("https://api.fanbox.cc/post.listCreator?creatorId=" + id + "&limit=" + limit, isEco);
             }
         } else {
-            var id = window.location.href.match(/fanbox.cc\/@.*\/posts\/(\d*)/)[1];
+            var id = window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts\/(\d*)/)[2];
             addByPostInfo(getPostInfoById(id));
         }
         var json=JSON.stringify(dlList);
