@@ -5,7 +5,8 @@ dlList.fileCount = 0;
 var isIgnoreFree = false;
 
 // 投稿の情報を個別に取得しない（基本true）
-var isEco = true;
+// 2022/03あたりのAPI仕様変更で投稿本文を個別に取得する必要が出てきた
+var isEco = false;
 
 function main() {
     if (window.location.origin == "https://downloads.fanbox.cc") {
