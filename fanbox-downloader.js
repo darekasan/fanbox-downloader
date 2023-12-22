@@ -26,16 +26,19 @@ function main() {
         };
         
     } else if (window.location.origin.includes("fanbox.cc")) {
-        if (window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts\/(\d*)/) == null) {
+        var href = window.location.href;
+        var isPosts = href.match(/https:\/\/.*\.fanbox.cc\/.*posts\/(\d*)/) == null;
+        var creatorId = (href.match(/https:\/\/www\.fanbox.cc\/@(.*)\/posts/)??href.match(/https:\/\/(.*)\.fanbox.cc\/posts/))[1]
+
+        if (isPosts) {
             dlList.items = new Array();
-            var id = window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts/)[1];
 
             isIgnoreFree = confirm("無料コンテンツを省く？");
 
             var limit = prompt("取得制限数(最大300)を入力 キャンセルで最後まで取得");
             if (limit == null){
                 var count=1;
-                var nextUrl="https://api.fanbox.cc/post.listCreator?creatorId=" + id + "&limit=100";
+                var nextUrl="https://api.fanbox.cc/post.listCreator?creatorId=" + creatorId + "&limit=100";
                 for(;nextUrl!=null;count++){
                     console.log(count+"回目");
                     var nextUrl = addByPostListUrl(nextUrl, isEco);
@@ -45,7 +48,7 @@ function main() {
                 var nextUrl = addByPostListUrl("https://api.fanbox.cc/post.listCreator?creatorId=" + id + "&limit=" + limit, isEco);
             }
         } else {
-            var id = window.location.href.match(/https:\/\/(.*)\.fanbox.cc\/posts\/(\d*)/)[2];
+            var id = href.match(/https:\/\/(.*)\.fanbox.cc\/.*posts\/(\d*)/)[2];
             addByPostInfo(getPostInfoById(id));
         }
         var json=JSON.stringify(dlList);
