@@ -11,18 +11,18 @@ var isEco = false;
 function main() {
     if (window.location.origin == "https://downloads.fanbox.cc") {
         document.body.innerHTML = "";
-        var tb = document.createElement("input");
-        tb.type = "text";
         var bt = document.createElement("input");
+        
         bt.type = "button";
-        bt.value = "ok";
-        document.body.appendChild(tb);
+        bt.value = "paste & start";
         document.body.appendChild(bt);
         bt.onclick = function(){
-            JSON.parse(tb.value).items.forEach(dl => {
-                createLink(dl.url, dl.filename);
+            navigator.clipboard.readText().then((text)=>{
+                JSON.parse(text).items.forEach(dl => {
+                    createLink(dl.url, dl.filename);
+                });
+                startDownload();
             });
-            startDownload();
         };
         
     } else if (window.location.origin.includes("fanbox.cc")) {
